@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Top Movies & Series</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta name="description" content="Top movies and TV series ranked by rating, votes and popularity.">
+  <meta name="theme-color" content="#05070c">
+
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div id="loader" class="loader">
+  <div class="spinner"></div>
+  <p>Loading...</p>
+</div>
+
+<header class="hero">
+  <h1>🎬 Top Movies & Series</h1>
+  <p>Balanced by Rating · Votes · Popularity</p>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="search-wrap">
+    <input id="search" placeholder="Search movie or series...">
+  </div>
+
+  <div class="filters">
+    <select id="type">
+      <option value="all">🎭 All</option>
+      <option value="movie">🎬 Movies</option>
+      <option value="series">📺 TV Series</option>
+    </select>
+
+   <select id="sort">
+  <option value="score">🏆 Score</option>
+  <option value="rating">⭐ Rating</option>
+  <option value="votes">🗳️ Votes</option>
+  <option value="popularity">🔥 Popularity</option>
+</select>
+
+<button id="sortDir" class="sort-dir" title="Toggle sort direction">
+  ⬇
+</button>
+
+    <select id="genre">
+      <option value="all">🎭 Genres</option>
+    </select>
+
+  <button id="favToggle" class="fav-toggle">
+  ❤️ Favourites
+</button>
+  </div>
+</header>
+
+<main id="grid" class="grid"></main>
+
+<div id="modal" class="modal hidden">
+  <div class="modal-backdrop"></div>
+  <div class="modal-content">
+    <button id="close">✖</button>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<div id="favouritesPanel" class="favourites">
+  <h3>❤️ Favourites</h3>
+  <div id="favList"></div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="config.js" defer></script>
+<script src="script.js" defer></script>
+
+</body>
+</html>
