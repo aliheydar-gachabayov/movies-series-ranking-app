@@ -1,44 +1,103 @@
-# 🎬 Top Movies & Series
+# 🎬 Movies & Series Ranking App
 
-A dynamic web application that ranks and displays top movies and TV series using multi-criteria scoring.
+A responsive web application that discovers and ranks movies and TV series using data from the [TMDB API](https://developer.themoviedb.org/docs).
 
-## 🚀 Features
+## Features
 
-- Fetches data from TMDB API
-- Custom weighted ranking algorithm
-- Search functionality (debounced)
-- Filter by type and genre
-- Multi-criteria sorting
-- Favourite system (LocalStorage)
-- Modal with detailed information
-- Trailer integration (YouTube)
-- Country flag display
-- Responsive UI
-- Loader and toast notifications
+- Fetches movie and TV series data from TMDB.
+- Combines popular, top-rated, and highly rated discovery results.
+- Uses a custom normalized ranking formula.
+- Search titles with debounced input.
+- Filter by media type and genre.
+- Sort by score, rating, vote count, or popularity.
+- Save favourites using browser LocalStorage.
+- View details, cast, creators, production country, and YouTube trailers.
+- Responsive layout with loading indicators and notifications.
 
-## 🧠 Scoring Algorithm
+## Ranking Formula
 
-Items are ranked using a custom weighted formula:
+Each movie and TV series receives a normalized ranking score based on three factors:
 
-Score = (Rating × 2.5) + (log10(Votes) × 2) + (Popularity × 0.02)
+```text
+score = (0.50 × normalized_rating)
+      + (0.25 × normalized_votes)
+      + (0.25 × normalized_popularity)
+```
 
-This ensures balance between quality, popularity, and engagement.
+The factors are normalized as follows:
 
-## 🏗 Architecture
+- **Rating:** TMDB rating divided by 10.
+- **Votes:** Logarithmically normalized vote count using the maximum vote count in the loaded dataset.
+- **Popularity:** Logarithmically normalized popularity using the maximum popularity in the loaded dataset.
 
-- HTML – semantic structure
-- CSS – component-based responsive design
-- JavaScript – modular logic & state management
-- API integration – asynchronous fetch with caching
-- Local storage – client-side persistence
+The ranking gives 50% weight to rating, 25% to vote count, and 25% to popularity.
 
-## 📦 Technologies Used
+The weights are manually selected project parameters, not statistically learned coefficients. The ranking is a heuristic scoring method and does not represent an objective measure of content quality. Scores may change when the loaded dataset changes.
+
+## Technologies
 
 - HTML5
-- CSS3 (Custom Properties, Grid, Animations)
+- CSS3
 - JavaScript (ES6+)
 - TMDB REST API
+- Browser LocalStorage
 
-## 📱 Responsive Design
+## Run Locally
 
-Fully responsive layout with adaptive grid and modal structure.
+### 1. Get a TMDB API key
+
+Create an account and request an API key from the [TMDB developer settings](https://www.themoviedb.org/settings/api).
+
+### 2. Clone the repository
+
+```bash
+git clone https://github.com/aliheydar-gachabayov/movies-series-ranking-app.git
+cd movies-series-ranking-app
+```
+
+### 3. Configure the API key
+
+Copy the example configuration:
+
+```bash
+cp config.example.js config.js
+```
+
+Replace the placeholder with your own TMDB API key.
+
+### 4. Start the application
+
+```bash
+python3 -m http.server 8000
+```
+
+Open http://localhost:8000 in your browser.
+
+## Project Structure
+
+```text
+movies-series-ranking-app/
+├── index.html
+├── script.js
+├── style.css
+├── config.example.js
+├── .gitignore
+├── README.md
+└── Technical_Report.pdf
+```
+
+## Notes and Limitations
+
+- The application requires an internet connection and a working TMDB API key.
+- The API key is used in browser-side JavaScript and can be inspected by users. Do not treat it as a secret.
+- Favourites are stored in the current browser's LocalStorage and are not synchronized between devices.
+- API responses and available metadata depend on TMDB.
+- Ranking weights are manually selected and have not been validated against user preference data.
+- Ranking scores depend on the data returned by TMDB.
+
+## Author
+
+**Aliheydar Gachabayov**
+
+- [GitHub](https://github.com/aliheydar-gachabayov)
+- [LinkedIn](https://www.linkedin.com/in/aliheydar-gachabayov)

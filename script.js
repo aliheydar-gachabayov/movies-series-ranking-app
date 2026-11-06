@@ -1,3 +1,4 @@
+
 const API_KEY = config.API_KEY;
 const API = "https://api.themoviedb.org/3";
 const IMG = "https://image.tmdb.org/t/p/w500";
@@ -29,11 +30,11 @@ let sortDir = "desc";
 let favourites = JSON.parse(localStorage.getItem("favourites") || "[]");
 
 const safeFetch = async url => {
-  try{
+  try {
     const r = await fetch(url);
-    if(!r.ok) throw "";
+    if (!r.ok) throw "";
     return await r.json();
-  }catch{
+  } catch {
     return null;
   }
 };
@@ -42,23 +43,23 @@ const saveFavourites = () =>
   localStorage.setItem("favourites", JSON.stringify(favourites));
 
 const showToast = msg => {
-  if(!toast) return;
+  if (!toast) return;
   toast.textContent = msg;
   toast.classList.add("show");
   setTimeout(() => toast.classList.remove("show"), 2000);
 };
 
-async function loadGenres(){
+async function loadGenres() {
   const [movie, tv] = await Promise.all([
     safeFetch(`${API}/genre/movie/list?api_key=${API_KEY}`),
     safeFetch(`${API}/genre/tv/list?api_key=${API_KEY}`)
   ]);
 
-  [...(movie?.genres||[]), ...(tv?.genres||[])]
+  [...(movie?.genres || []), ...(tv?.genres || [])]
     .forEach(g => genres[g.id] = g.name);
 }
 
-async function fetchAll(type){
+async function fetchAll(type) {
   const endpoints = [
     `${API}/${type}/top_rated?api_key=${API_KEY}&page=`,
     `${API}/${type}/popular?api_key=${API_KEY}&page=`,
@@ -66,27 +67,24 @@ async function fetchAll(type){
   ];
 
   const map = {};
-  for(const base of endpoints){
-    for(let p=1;p<=5;p++){
-      const d = await safeFetch(base+p);
+
+  for (const base of endpoints) {
+    for (let p = 1; p <= 5; p++) {
+      const d = await safeFetch(base + p);
       d?.results?.forEach(i => map[i.id] = i);
     }
   }
+
   return Object.values(map);
 }
 
-function normalize(list,type){
+function normalize(list, type) {
   return list
     .filter(i => i.poster_path)
     .map(i => {
       const rating = i.vote_average || 0;
-      const votes = i.vote_count || 1;
+      const votes = i.vote_count || 0;
       const popularity = i.popularity || 0;
-
-      const score =
-        rating * 2.5 +
-        Math.log10(votes) * 2 +
-        popularity * 0.02;
 
       return {
         id: i.id,
@@ -95,17 +93,15 @@ function normalize(list,type){
         rating,
         votes,
         popularity,
-        score,
-        year: (i.release_date || i.first_air_date || "").slice(0,4),
+        score: 0,
+        year: (i.release_date || i.first_air_date || "").slice(0, 4),
         poster: IMG + i.poster_path,
         genres: i.genre_ids.map(id => genres[id]).filter(Boolean)
       };
-    })
-    .sort((a,b) => b.score - a.score)
-    .slice(0,101);
+    });
 }
 
-async function loadAll(){
+async function loadAll() {
   await loadGenres();
 
   const [moviesRaw, seriesRaw] = await Promise.all([
@@ -113,10 +109,32 @@ async function loadAll(){
     fetchAll("tv")
   ]);
 
-  const movies = normalize(moviesRaw,"movie");
-  const series = normalize(seriesRaw,"series");
+  const movies = normalize(moviesRaw, "movie");
+  const series = normalize(seriesRaw, "series");
 
   items = [...movies, ...series];
+
+  // Find maximum values for normalization
+  const maxVotes = Math.max(...items.map(i => i.votes));
+  const maxPopularity = Math.max(...items.map(i => i.popularity));
+
+  // Calculate normalized ranking scores
+  items.forEach(item => {
+    const normalizedRating = item.rating / 10;
+
+    const normalizedVotes = maxVotes > 0
+      ? Math.log1p(item.votes) / Math.log1p(maxVotes)
+      : 0;
+
+    const normalizedPopularity = maxPopularity > 0
+      ? Math.log1p(item.popularity) / Math.log1p(maxPopularity)
+      : 0;
+
+    item.score =
+      0.50 * normalizedRating +
+      0.25 * normalizedVotes +
+      0.25 * normalizedPopularity;
+  });
 
   stats.innerHTML = `
     <div class="stat"><b>${movies.length}</b><br>Movies</div>
@@ -134,23 +152,28 @@ async function loadAll(){
   loader.style.display = "none";
 }
 
-function render(){
+function render() {
   let list = [...items];
   const q = search.value.toLowerCase();
 
-  if(q) list = list.filter(i => i.title.toLowerCase().includes(q));
-  if(typeSelect.value !== "all") list = list.filter(i => i.type === typeSelect.value);
-  if(genreSelect.value !== "all") list = list.filter(i => i.genres.includes(genreSelect.value));
+  if (q) list = list.filter(i => i.title.toLowerCase().includes(q));
+  if (typeSelect.value !== "all") {
+    list = list.filter(i => i.type === typeSelect.value);
+  }
+  if (genreSelect.value !== "all") {
+    list = list.filter(i => i.genres.includes(genreSelect.value));
+  }
 
   const sorters = {
-    score:(a,b)=>b.score-a.score,
-    rating:(a,b)=>b.rating-a.rating,
-    votes:(a,b)=>b.votes-a.votes,
-    popularity:(a,b)=>b.popularity-a.popularity
+    score: (a, b) => b.score - a.score,
+    rating: (a, b) => b.rating - a.rating,
+    votes: (a, b) => b.votes - a.votes,
+    popularity: (a, b) => b.popularity - a.popularity
   };
 
   list.sort(sorters[sortSelect.value]);
-  if(sortDir === "asc") list.reverse();
+
+  if (sortDir === "asc") list.reverse();
 
   grid.innerHTML = "";
 
@@ -158,11 +181,13 @@ function render(){
     const c = document.createElement("div");
     c.className = "card";
 
-    const isFav = favourites.some(f => f.id === i.id);
+    const isFav = favourites.some(
+      f => f.id === i.id && f.type === i.type
+    );
 
     c.innerHTML = `
       <button class="fav-star ${isFav ? "active" : ""}">♥</button>
-      <div class="rank">#${idx+1}</div>
+      <div class="rank">#${idx + 1}</div>
       <img src="${i.poster}" onerror="this.src='${FALLBACK}'">
       <div class="card-info">
         <h4>${i.title}</h4>
@@ -172,10 +197,15 @@ function render(){
 
     c.querySelector(".fav-star").onclick = e => {
       e.stopPropagation();
-      const exists = favourites.find(f => f.id === i.id);
+
+      const exists = favourites.find(
+        f => f.id === i.id && f.type === i.type
+      );
 
       favourites = exists
-        ? favourites.filter(f => f.id !== i.id)
+        ? favourites.filter(
+            f => !(f.id === i.id && f.type === i.type)
+          )
         : [...favourites, i];
 
       saveFavourites();
@@ -184,122 +214,144 @@ function render(){
       render();
     };
 
-    c.onclick = () => openModal(i.id,i.type);
+    c.onclick = () => openModal(i.id, i.type);
     grid.appendChild(c);
   });
 }
 
-async function openModal(id,type){
+async function openModal(id, type) {
   favPanel?.classList.remove("show");
   modal.classList.remove("hidden");
   document.body.classList.add("modal-open");
   modalBody.textContent = "Loading...";
 
-  if(!cache[id]){
-    const apiType = type==="series" ? "tv" : "movie";
-    cache[id] = await safeFetch(`${API}/${apiType}/${id}?api_key=${API_KEY}&append_to_response=videos,credits`);
-  }
+  const cacheKey = `${type}-${id}`;
 
-  const d = cache[id];
-  if(!d){ modalBody.textContent="No data"; return; }
+  if (!cache[cacheKey]) {
+    const apiType = type === "series" ? "tv" : "movie";
 
-  const year = type==="movie"
-    ? (d.release_date||"").slice(0,4)
-    : `${(d.first_air_date||"").slice(0,4)}–${d.last_air_date?.slice(0,4)||""}`;
-
-  const yt = d.videos?.results
-  ?.filter(v => v.site === "YouTube")
-  ?.sort((a,b) => {
-    const p = ["Trailer","Teaser","Clip","Featurette","Behind the Scenes"];
-    return p.indexOf(a.type) - p.indexOf(b.type);
-  })[0];
-
-  const creator = (() => {
-  if(type === "series"){
-    return (
-      d.created_by?.map(c=>c.name).join(", ") ||
-      d.credits?.crew?.find(c=>c.job==="Executive Producer")?.name ||
-      d.credits?.crew?.find(c=>c.job==="Producer")?.name ||
-      "Unknown"
+    cache[cacheKey] = await safeFetch(
+      `${API}/${apiType}/${id}?api_key=${API_KEY}&append_to_response=videos,credits`
     );
   }
 
-  return (
-    d.credits?.crew?.find(c=>["Director","Screenplay","Story","Writer","Producer"].includes(c.job))?.name ||
-    "Unknown"
-  );
-})();
+  const d = cache[cacheKey];
 
-  const actors = d.credits?.cast?.slice(0,12).map(a=>a.name).join(", ") || "Unknown";
+  if (!d) {
+    modalBody.textContent = "No data";
+    return;
+  }
+
+  const year = type === "movie"
+    ? (d.release_date || "").slice(0, 4)
+    : `${(d.first_air_date || "").slice(0, 4)}–${d.last_air_date?.slice(0, 4) || ""}`;
+
+  const yt = d.videos?.results
+    ?.filter(v => v.site === "YouTube")
+    ?.sort((a, b) => {
+      const p = ["Trailer", "Teaser", "Clip", "Featurette", "Behind the Scenes"];
+      return p.indexOf(a.type) - p.indexOf(b.type);
+    })[0];
+
+  const creator = (() => {
+    if (type === "series") {
+      return (
+        d.created_by?.map(c => c.name).join(", ") ||
+        d.credits?.crew?.find(c => c.job === "Executive Producer")?.name ||
+        d.credits?.crew?.find(c => c.job === "Producer")?.name ||
+        "Unknown"
+      );
+    }
+
+    return (
+      d.credits?.crew?.find(c =>
+        ["Director", "Screenplay", "Story", "Writer", "Producer"].includes(c.job)
+      )?.name || "Unknown"
+    );
+  })();
+
+  const actors = d.credits?.cast?.slice(0, 12).map(a => a.name).join(", ") || "Unknown";
   const country = d.production_countries?.[0];
-  const flag = country ? `https://flagcdn.com/w640/${country.iso_3166_1.toLowerCase()}.png` : "";
+  const flag = country
+    ? `https://flagcdn.com/w640/${country.iso_3166_1.toLowerCase()}.png`
+    : "";
 
   modalBody.innerHTML = `
     <div class="modal-header">
-      <img class="modal-poster" src="${IMG+d.poster_path}" onerror="this.src='${FALLBACK}'">
+      <img class="modal-poster" src="${IMG + d.poster_path}" onerror="this.src='${FALLBACK}'">
       <div>
-        <h2>${d.title||d.name} ${year?`(${year})`:""}</h2>
-        <p>${d.genres.map(g=>g.name).join(", ")}</p>
-        <div class="section"><h3>📖 Overview</h3><p>${d.overview||"No overview."}</p></div>
+        <h2>${d.title || d.name} ${year ? `(${year})` : ""}</h2>
+        <p>${d.genres.map(g => g.name).join(", ")}</p>
+        <div class="section"><h3>📖 Overview</h3><p>${d.overview || "No overview."}</p></div>
         <div class="section"><h3>🎭 Cast</h3><p>${actors}</p></div>
         <div class="section"><h3>✍️ Creator</h3><p>${creator}</p></div>
       </div>
       <div class="country-flag" style="background-image:url('${flag}')">
         <div class="country-info">
-          <span class="name">${country?.name||"N/A"}</span>
+          <span class="name">${country?.name || "N/A"}</span>
         </div>
       </div>
     </div>
-    ${yt?`
+    ${yt ? `
     <div class="section trailer-section">
       <h3>▶️ Trailer</h3>
       <div class="trailer-wrapper">
         <iframe src="https://www.youtube.com/embed/${yt.key}" allowfullscreen></iframe>
       </div>
-    </div>`:""}
+    </div>` : ""}
   `;
 }
 
-function renderFavourites(){
-  if(!favList) return;
+function renderFavourites() {
+  if (!favList) return;
+
   favList.innerHTML = favourites.length
     ? ""
     : "<p style='opacity:.6'>No favourites yet</p>";
 
   favourites.forEach(i => {
     const d = document.createElement("div");
-    d.style.cssText="display:flex;gap:12px;margin-bottom:12px;cursor:pointer";
+    d.style.cssText = "display:flex;gap:12px;margin-bottom:12px;cursor:pointer";
     d.innerHTML = `<img src="${i.poster}" style="width:50px;border-radius:8px"><div><b>${i.title}</b><br><small>${i.type}</small></div>`;
-    d.onclick = ()=>{ favPanel.classList.remove("show"); openModal(i.id,i.type); };
+
+    d.onclick = () => {
+      favPanel.classList.remove("show");
+      openModal(i.id, i.type);
+    };
+
     favList.appendChild(d);
   });
 }
 
-$("close").onclick = ()=>{
+$("close").onclick = () => {
   modal.classList.add("hidden");
   document.body.classList.remove("modal-open");
 };
 
 search.oninput = (() => {
-  let t; 
-  return () => { clearTimeout(t); t=setTimeout(render,250); };
+  let t;
+
+  return () => {
+    clearTimeout(t);
+    t = setTimeout(render, 250);
+  };
 })();
 
-[typeSelect,genreSelect].forEach(e=>e.onchange=render);
+[typeSelect, genreSelect].forEach(e => e.onchange = render);
 
-sortSelect.onchange=()=>{
-  sortDir="desc";
-  sortDirBtn.textContent="⬇";
+sortSelect.onchange = () => {
+  sortDir = "desc";
+  sortDirBtn.textContent = "⬇";
   render();
 };
 
-sortDirBtn.onclick=()=>{
-  sortDir=sortDir==="desc"?"asc":"desc";
-  sortDirBtn.textContent=sortDir==="desc"?"⬇":"⬆";
+sortDirBtn.onclick = () => {
+  sortDir = sortDir === "desc" ? "asc" : "desc";
+  sortDirBtn.textContent = sortDir === "desc" ? "⬇" : "⬆";
   render();
 };
 
-favToggle.onclick=()=>{
+favToggle.onclick = () => {
   favPanel.classList.toggle("show");
   renderFavourites();
 };
