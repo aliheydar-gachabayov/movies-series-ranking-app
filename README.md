@@ -1,6 +1,8 @@
+
+cat > README.md <<'EOF'
 # 🎬 Movies & Series Ranking App
 
-A responsive web application that discovers and ranks movies and TV series using data from the [TMDB API](https://developer.themoviedb.org/docs).
+A responsive web application that discovers and ranks movies and TV series using data from the [TMDB API](https://developer.themoviedb.org/docs). Users can search titles, filter by genre and media type, sort results, view details and trailers, and save favourites in local storage.
 
 ## Features
 
@@ -63,7 +65,11 @@ Copy the example configuration:
 cp config.example.js config.js
 ```
 
-Replace the placeholder with your own TMDB API key.
+Replace the placeholder in `config.js` with your own TMDB API key.
+
+The local `config.js` file is ignored by Git and should not be committed.
+
+**Note:** The API key is used by browser-side JavaScript and can be inspected by users. Do not treat it as a secret.
 
 ### 4. Start the application
 
@@ -89,11 +95,17 @@ movies-series-ranking-app/
 ## Notes and Limitations
 
 - The application requires an internet connection and a working TMDB API key.
-- The API key is used in browser-side JavaScript and can be inspected by users. Do not treat it as a secret.
 - Favourites are stored in the current browser's LocalStorage and are not synchronized between devices.
 - API responses and available metadata depend on TMDB.
 - Ranking weights are manually selected and have not been validated against user preference data.
 - Ranking scores depend on the data returned by TMDB.
+
+## Possible Improvements
+
+- Add automated tests for ranking, filtering, and sorting.
+- Add pagination or incremental loading.
+- Improve API error states and retry behavior.
+- Add accessibility checks and keyboard navigation.
 
 ## Author
 
@@ -101,3 +113,4 @@ movies-series-ranking-app/
 
 - [GitHub](https://github.com/aliheydar-gachabayov)
 - [LinkedIn](https://www.linkedin.com/in/aliheydar-gachabayov)
+EOF
