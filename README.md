@@ -1,5 +1,3 @@
-
-cat > README.md <<'EOF'
 # 🎬 Movies & Series Ranking App
 
 A responsive web application that discovers and ranks movies and TV series using data from the [TMDB API](https://developer.themoviedb.org/docs). Users can search titles, filter by genre and media type, sort results, view details and trailers, and save favourites in local storage.
@@ -113,4 +111,3 @@ movies-series-ranking-app/
 
 - [GitHub](https://github.com/aliheydar-gachabayov)
 - [LinkedIn](https://www.linkedin.com/in/aliheydar-gachabayov)
-EOF
