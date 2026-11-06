@@ -6,6 +6,15 @@ const FALLBACK = "https://via.placeholder.com/400x600?text=No+Image";
 
 const $ = id => document.getElementById(id);
 
+// Escape external API data before inserting it into HTML templates.
+const escapeHTML = value => String(value ?? "").replace(/[&<>"']/g, char => ({
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;"
+}[char]));
+
 const grid = $("grid");
 const modal = $("modal");
 const modalBody = $("modalBody");
@@ -188,9 +197,9 @@ function render() {
     c.innerHTML = `
       <button class="fav-star ${isFav ? "active" : ""}">♥</button>
       <div class="rank">#${idx + 1}</div>
-      <img src="${i.poster}" onerror="this.src='${FALLBACK}'">
+      <img src="${escapeHTML(i.poster)}" onerror="this.src='${FALLBACK}'">
       <div class="card-info">
-        <h4>${i.title}</h4>
+        <h4>${escapeHTML(i.title)}</h4>
         <span>⭐ ${i.rating.toFixed(1)} · 🗳️ ${i.votes.toLocaleString()} · 🔥 ${Math.round(i.popularity)}</span>
       </div>
     `;
@@ -280,15 +289,15 @@ async function openModal(id, type) {
     <div class="modal-header">
       <img class="modal-poster" src="${IMG + d.poster_path}" onerror="this.src='${FALLBACK}'">
       <div>
-        <h2>${d.title || d.name} ${year ? `(${year})` : ""}</h2>
-        <p>${d.genres.map(g => g.name).join(", ")}</p>
-        <div class="section"><h3>📖 Overview</h3><p>${d.overview || "No overview."}</p></div>
-        <div class="section"><h3>🎭 Cast</h3><p>${actors}</p></div>
-        <div class="section"><h3>✍️ Creator</h3><p>${creator}</p></div>
+        <h2>${escapeHTML(d.title || d.name)} ${escapeHTML(year ? `(${year})` : "")}</h2>
+        <p>${escapeHTML(d.genres.map(g => g.name).join(", "))}</p>
+        <div class="section"><h3>📖 Overview</h3><p>${escapeHTML(d.overview || "No overview.")}</p></div>
+        <div class="section"><h3>🎭 Cast</h3><p>${escapeHTML(actors)}</p></div>
+        <div class="section"><h3>✍️ Creator</h3><p>${escapeHTML(creator)}</p></div>
       </div>
-      <div class="country-flag" style="background-image:url('${flag}')">
+      <div class="country-flag" style="background-image:url('${escapeHTML(flag)}')">
         <div class="country-info">
-          <span class="name">${country?.name || "N/A"}</span>
+          <span class="name">${escapeHTML(country?.name || "N/A")}</span>
         </div>
       </div>
     </div>
@@ -296,7 +305,7 @@ async function openModal(id, type) {
     <div class="section trailer-section">
       <h3>▶️ Trailer</h3>
       <div class="trailer-wrapper">
-        <iframe src="https://www.youtube.com/embed/${yt.key}" allowfullscreen></iframe>
+        <iframe src="https://www.youtube.com/embed/${escapeHTML(yt.key)}" allowfullscreen></iframe>
       </div>
     </div>` : ""}
   `;
@@ -312,7 +321,7 @@ function renderFavourites() {
   favourites.forEach(i => {
     const d = document.createElement("div");
     d.style.cssText = "display:flex;gap:12px;margin-bottom:12px;cursor:pointer";
-    d.innerHTML = `<img src="${i.poster}" style="width:50px;border-radius:8px"><div><b>${i.title}</b><br><small>${i.type}</small></div>`;
+    d.innerHTML = `<img src="${escapeHTML(i.poster)}" style="width:50px;border-radius:8px"><div><b>${escapeHTML(i.title)}</b><br><small>${escapeHTML(i.type)}</small></div>`;
 
     d.onclick = () => {
       favPanel.classList.remove("show");
