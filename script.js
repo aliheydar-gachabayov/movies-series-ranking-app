@@ -207,7 +207,7 @@ function render() {
     c.innerHTML = `
       <button class="fav-star ${isFav ? "active" : ""}">♥</button>
       <div class="rank">#${idx + 1}</div>
-      <img src="${escapeHTML(i.poster)}" onerror="this.src='${FALLBACK}'">
+      <img src="${escapeHTML(i.poster)}" alt="Poster for ${escapeHTML(i.title)}" loading="lazy" onerror="this.src='${FALLBACK}'">
       <div class="card-info">
         <h4>${escapeHTML(i.title)}</h4>
         <span>⭐ ${i.rating.toFixed(1)} · 🗳️ ${i.votes.toLocaleString()} · 🔥 ${Math.round(i.popularity)}</span>
@@ -331,7 +331,7 @@ function renderFavourites() {
   favourites.forEach(i => {
     const d = document.createElement("div");
     d.style.cssText = "display:flex;gap:12px;margin-bottom:12px;cursor:pointer";
-    d.innerHTML = `<img src="${escapeHTML(i.poster)}" style="width:50px;border-radius:8px"><div><b>${escapeHTML(i.title)}</b><br><small>${escapeHTML(i.type)}</small></div>`;
+    d.innerHTML = `<img src="${escapeHTML(i.poster)}" alt="Poster for ${escapeHTML(i.title)}" loading="lazy" style="width:50px;border-radius:8px"><div><b>${escapeHTML(i.title)}</b><br><small>${escapeHTML(i.type)}</small></div>`;
 
     d.onclick = () => {
       favPanel.classList.remove("show");
