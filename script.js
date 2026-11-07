@@ -111,12 +111,22 @@ function normalize(list, type) {
 }
 
 async function loadAll() {
+  if (!API_KEY || API_KEY === "YOUR_TMDB_API_KEY") {
+    loader.innerHTML = "<p>Add your TMDB API key to config.js to load movies and series.</p>";
+    return;
+  }
+
   await loadGenres();
 
   const [moviesRaw, seriesRaw] = await Promise.all([
     fetchAll("movie"),
     fetchAll("tv")
   ]);
+
+  if (moviesRaw.length === 0 && seriesRaw.length === 0) {
+    loader.innerHTML = "<p>Could not load titles. Check your TMDB API key and internet connection, then refresh.</p>";
+    return;
+  }
 
   const movies = normalize(moviesRaw, "movie");
   const series = normalize(seriesRaw, "series");
